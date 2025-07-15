@@ -1,0 +1,8 @@
+
+services:
+  - type: web
+    name: telegram-admin-bot-node
+    env: node
+    buildCommand: npm install
+    startCommand: node bot.js
+    autoDeploy: true
