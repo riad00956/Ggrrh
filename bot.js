@@ -1,7 +1,8 @@
-
-const { Telegraf, Markup } = require('telegraf');
+const { Telegraf, Markup, session } = require('telegraf');
 const BOT_TOKEN = process.env.BOT_TOKEN || '7685134552:AAH_qlJp65O9w7Vkzq74J_w6BmoJWguuWrY';
 const bot = new Telegraf(BOT_TOKEN);
+
+bot.use(session());
 
 const warnings = {};
 
@@ -27,9 +28,10 @@ const actions = ['ban', 'kick', 'mute', 'unmute', 'warn', 'stats'];
 actions.forEach(action => {
     bot.action(action, async (ctx) => {
         await ctx.answerCbQuery();
-        ctx.session = ctx.session || {};
         ctx.session.lastAction = action;
-        ctx.editMessageText(`✅ Now reply to a user message to perform: *${action.toUpperCase()}*`, { parse_mode: 'Markdown' });
+        await ctx.editMessageText(`✅ Now reply to a user message to perform: *${action.toUpperCase()}*`, {
+            parse_mode: 'Markdown'
+        });
     });
 });
 
@@ -86,11 +88,22 @@ bot.on('message', async (ctx) => {
                 ctx.reply(`📊 ${reply.from.first_name} has ${warnings[targetId] || 0} warning(s).`);
                 break;
         }
+
         ctx.session.lastAction = null;
+
     } catch (error) {
         ctx.reply(`❌ Error: ${error.description || error.message}`);
     }
 });
 
-bot.launch();
-console.log("Bot started...");
+// ✅ Port 8000 explicitly set (works with Render)
+const PORT = process.env.PORT || 8000;
+
+bot.launch({
+    webhook: {
+        domain: process.env.RENDER_EXTERNAL_HOSTNAME,
+        port: PORT
+    }
+});
+
+console.log("✅ Bot running on port:", PORT);
